@@ -6,10 +6,8 @@ const STORAGE_KEY = 'bill.invoice.v1';
 
 const makeEmptyItem = () => ({
   description: '',
-  size: '',
   colour: '',
   rate: '',
-  rs: '',
   amount: '',
   ps: '',
 });
@@ -69,10 +67,17 @@ export default function InvoiceForm() {
     if (saved.invoice) setInvoice(prev => ({ ...prev, ...saved.invoice }));
     if (Array.isArray(saved.items) && saved.items.length > 0) {
       setItems(
-        saved.items.map(it => ({
-          ...makeEmptyItem(),
-          ...(it || {}),
-        }))
+        saved.items.map(it => {
+          const row = {
+            ...makeEmptyItem(),
+            ...(it || {}),
+          };
+          // ensure amount reflects colour * rate on load
+          const c = parseFloat(String(row.colour || '').replace(/,/g, '')) || 0;
+          const r = parseFloat(String(row.rate || '').replace(/,/g, '')) || 0;
+          row.amount = c * r;
+          return row;
+        })
       );
     }
   }, []);
@@ -93,7 +98,18 @@ export default function InvoiceForm() {
 
   const updateItem = (idx, key, value) => {
     setItems(prev =>
-      prev.map((row, i) => (i === idx ? { ...row, [key]: value } : row))
+      prev.map((row, i) => {
+        if (i !== idx) return row;
+        // update the requested field
+        const newRow = { ...row, [key]: value };
+        // if colour or rate changed, recalc amount automatically
+        if (key === 'colour' || key === 'rate') {
+          const c = parseFloat(String(newRow.colour || '').replace(/,/g, '')) || 0;
+          const r = parseFloat(String(newRow.rate || '').replace(/,/g, '')) || 0;
+          newRow.amount = c * r;
+        }
+        return newRow;
+      })
     );
   };
 
@@ -227,11 +243,9 @@ export default function InvoiceForm() {
                 <tr>
                   <th style={{ width: 38 }}>No.</th>
                   <th style={{ width: 38 }}>Description</th>
-                  <th style={{ width: 64 }}>Size</th>
                   <th style={{ width: 74 }}>Colour</th>
                   <th style={{ width: 72 }}>Rate</th>
-                  <th style={{ width: 54 }}>Rs.</th>
-                  <th style={{ width: 86 }}>Amount</th>
+                  <th style={{ width: 86 }}>Amount&nbsp;(colour×rate)</th>
                   <th style={{ width: 46 }}>Ps.</th>
                 </tr>
               </thead>
@@ -239,44 +253,48 @@ export default function InvoiceForm() {
                 {items.map((row, idx) => (
                   <tr key={idx}>
                     <td className="num">{idx + 1}</td>
+
                     <td>
                       <input
                         value={row.description}
                         onChange={e => updateItem(idx, 'description', e.target.value)}
                       />
                     </td>
+
                     <td>
                       <input
-                        value={row.size}
-                        onChange={e => updateItem(idx, 'size', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
+                        type="number"
+                        min="0"
+                        step="any"
                         value={row.colour}
                         onChange={e => updateItem(idx, 'colour', e.target.value)}
                       />
                     </td>
+
                     <td>
                       <input
+                        type="number"
+                        min="0"
+                        step="any"
                         value={row.rate}
                         onChange={e => updateItem(idx, 'rate', e.target.value)}
                       />
                     </td>
+
                     <td>
                       <input
-                        value={row.rs}
-                        onChange={e => updateItem(idx, 'rs', e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
+                        type="number"
+                        readOnly
+                        title="Automatically calculated as colour × rate"
                         value={row.amount}
-                        onChange={e => updateItem(idx, 'amount', e.target.value)}
                       />
                     </td>
+
                     <td>
                       <input
+                        type="number"
+                        min="0"
+                        step="1"
                         value={row.ps}
                         onChange={e => updateItem(idx, 'ps', e.target.value)}
                       />
@@ -289,7 +307,7 @@ export default function InvoiceForm() {
               <button
                 type="button"
                 onClick={addRow}
-                title="Add a new blank item row for entering Description, Size, Colour, Rate, Rs., Amount and Ps."
+                title="Add a new blank item row for entering Description, Colour, Rate, Amount and Ps."
               >
                 Add item
               </button>
@@ -361,7 +379,7 @@ export default function InvoiceForm() {
 
           <div className="bill-to">
             <span className="meta-label">M/S.</span>
-            <span className="meta-underline wide">{invoice.billTo || '\u00A0'}</span>
+            <span className="meta-underline wide bold">{invoice.billTo || '\u00A0'}</span>
           </div>
 
           <div className="bill-table-wrap">
@@ -370,10 +388,8 @@ export default function InvoiceForm() {
                 <tr>
                   <th className="c-no">No.</th>
                   <th className="c-desc">Description</th>
-                  <th className="c-size">Size</th>
                   <th className="c-colour">Col...</th>
                   <th className="c-rate">Rate</th>
-                  <th className="c-rs">R..</th>
                   <th className="c-amount">Amount</th>
                   <th className="c-ps">P...</th>
                 </tr>
@@ -387,10 +403,8 @@ export default function InvoiceForm() {
                         : '\u00A0'}
                     </td>
                     <td className="c-desc">{row.description || '\u00A0'}</td>
-                    <td className="c-size">{row.size || '\u00A0'}</td>
                     <td className="c-colour">{row.colour || '\u00A0'}</td>
                     <td className="c-rate">{row.rate || '\u00A0'}</td>
-                    <td className="c-rs">{row.rs || '\u00A0'}</td>
                     <td className="c-amount">{row.amount || '\u00A0'}</td>
                     <td className="c-ps">{row.ps || '\u00A0'}</td>
                   </tr>
@@ -398,7 +412,7 @@ export default function InvoiceForm() {
               </tbody>
               <tfoot>
                 <tr className="bill-total-row">
-                  <td className="c-desc total-label" colSpan={6}>Total</td>
+                  <td className="c-desc total-label" colSpan={4}>Total</td>
                   <td className="c-amount total-value">{totals.amount ? String(totals.amount) : '\u00A0'}</td>
                   <td className="c-ps total-value">{totals.ps ? String(totals.ps) : '\u00A0'}</td>
                 </tr>
