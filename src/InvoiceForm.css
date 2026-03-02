@@ -133,6 +133,38 @@
   width: 80px;
 }
 
+.items-editor tbody td:last-child {
+  text-align: center;
+}
+
+.delete-button {
+  background: #fff;
+  border: 1px solid #e6e8ee;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  cursor: pointer;
+  font-size: 16px;
+  color: #dc2626;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-button:hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.delete-button:active {
+  background: #fee2e2;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
 .items-actions {
   display: flex;
   justify-content: flex-end;

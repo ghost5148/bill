@@ -115,6 +115,10 @@ export default function InvoiceForm() {
 
   const addRow = () => setItems(prev => [...prev, makeEmptyItem()]);
 
+  const deleteRow = (idx) => {
+    setItems(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const newBill = () => {
     setInvoice(prev => ({ ...prev, date: todayISO(), billNo: '', billTo: '' }));
     setItems(Array.from({ length: DEFAULT_ROWS }, makeEmptyItem));
@@ -247,6 +251,7 @@ export default function InvoiceForm() {
                   <th style={{ width: 72 }}>Rate</th>
                   <th style={{ width: 86 }}>Amount&nbsp;(colour×rate)</th>
                   <th style={{ width: 46 }}>Ps.</th>
+                  <th style={{ width: 38 }}>Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -298,6 +303,17 @@ export default function InvoiceForm() {
                         value={row.ps}
                         onChange={e => updateItem(idx, 'ps', e.target.value)}
                       />
+                    </td>
+
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => deleteRow(idx)}
+                        title="Delete this row"
+                        className="delete-button"
+                      >
+                        ✕
+                      </button>
                     </td>
                   </tr>
                 ))}
